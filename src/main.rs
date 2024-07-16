@@ -93,6 +93,7 @@ async fn serve_html(
 
 struct Configuration {
     html_cache_path: PathBuf,
+    listening_port: u16,
 }
 
 impl Configuration {
@@ -101,10 +102,13 @@ impl Configuration {
             .add_source(config::File::with_name("md_serve").required(false))
             .set_default("html_cache_path", "./html_cache")
             .unwrap()
+            .set_default("listening_port", 3000)
+            .unwrap()
             .build()?;
 
         Ok(Self {
             html_cache_path: config.get_string("html_cache_path")?.into(),
+            listening_port: config.get("listening_port")?,
         })
     }
 }
@@ -113,7 +117,10 @@ impl Configuration {
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    let Configuration { html_cache_path } = Configuration::load().unwrap();
+    let Configuration {
+        html_cache_path,
+        listening_port,
+    } = Configuration::load().unwrap();
 
     let html_cache = HTMLCache {
         directory: PathBuf::from(html_cache_path),
@@ -123,7 +130,9 @@ async fn main() {
         .route("/favicon.ico", get(|| async {}))
         .route("/*file", get(serve_html).with_state(html_cache));
 
-    let listener = TcpListener::bind("localhost:3000").await.unwrap();
+    let listener = TcpListener::bind(format!("localhost:{listening_port}"))
+        .await
+        .unwrap();
 
     info!("Bound to {}", listener.local_addr().unwrap());
 
