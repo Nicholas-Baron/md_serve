@@ -12,6 +12,9 @@ use tokio::{fs, io};
 
 use tracing::info;
 
+mod configuration;
+use configuration::Configuration;
+
 async fn run_markdown(input_markdown: &Path, output_html: &Path) -> io::Result<ExitStatus> {
     info!("Converting {:?} to {:?}", input_markdown, output_html);
 
@@ -93,15 +96,22 @@ async fn serve_html(
 async fn main() {
     tracing_subscriber::fmt::init();
 
+    let Configuration {
+        html_cache_path,
+        listening_port,
+    } = Configuration::load().unwrap();
+
     let html_cache = HTMLCache {
-        directory: PathBuf::from("./html_cache"),
+        directory: html_cache_path,
     };
 
     let app = Router::new()
         .route("/favicon.ico", get(|| async {}))
         .route("/*file", get(serve_html).with_state(html_cache));
 
-    let listener = TcpListener::bind("localhost:3000").await.unwrap();
+    let listener = TcpListener::bind(format!("localhost:{listening_port}"))
+        .await
+        .unwrap();
 
     info!("Bound to {}", listener.local_addr().unwrap());
 
