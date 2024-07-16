@@ -12,6 +12,8 @@ use tokio::{fs, io};
 
 use tracing::info;
 
+use config::Config;
+
 async fn run_markdown(input_markdown: &Path, output_html: &Path) -> io::Result<ExitStatus> {
     info!("Converting {:?} to {:?}", input_markdown, output_html);
 
@@ -89,12 +91,32 @@ async fn serve_html(
     Html(fs::read_to_string(output_html).await.unwrap())
 }
 
+struct Configuration {
+    html_cache_path: PathBuf,
+}
+
+impl Configuration {
+    fn load() -> Result<Self, config::ConfigError> {
+        let config = Config::builder()
+            .add_source(config::File::with_name("md_serve").required(false))
+            .set_default("html_cache_path", "./html_cache")
+            .unwrap()
+            .build()?;
+
+        Ok(Self {
+            html_cache_path: config.get_string("html_cache_path")?.into(),
+        })
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
+    let Configuration { html_cache_path } = Configuration::load().unwrap();
+
     let html_cache = HTMLCache {
-        directory: PathBuf::from("./html_cache"),
+        directory: PathBuf::from(html_cache_path),
     };
 
     let app = Router::new()
