@@ -12,7 +12,7 @@ use tokio::{fs, io};
 
 use tracing::info;
 
-async fn run_markdown(input_markdown: &Path, output_html: &Path) -> Result<ExitStatus, io::Error> {
+async fn run_markdown(input_markdown: &Path, output_html: &Path) -> io::Result<ExitStatus> {
     info!("Converting {:?} to {:?}", input_markdown, output_html);
 
     let title = input_markdown
@@ -46,7 +46,7 @@ struct HTMLCache {
 }
 
 impl HTMLCache {
-    async fn cache_markdown(&self, input_markdown: &Path) -> Result<PathBuf, io::Error> {
+    async fn cache_markdown(&self, input_markdown: &Path) -> io::Result<PathBuf> {
         fs::create_dir_all(&self.directory).await?;
 
         let mut output_html = self.directory.clone();
