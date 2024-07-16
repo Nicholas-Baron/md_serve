@@ -78,8 +78,13 @@ async fn serve_html(
     URLPath(path): URLPath<String>,
     State(html_cache): State<HTMLCache>,
 ) -> Html<String> {
-    let mut input_markdown = PathBuf::from(path);
+    let mut input_markdown = PathBuf::from(path.clone());
     input_markdown.set_extension("md");
+    info!(
+        "{path} requested. Sourcing from {}",
+        input_markdown.display()
+    );
+
     let output_html = html_cache.cache_markdown(&input_markdown).await.unwrap();
     Html(fs::read_to_string(output_html).await.unwrap())
 }
