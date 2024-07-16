@@ -107,7 +107,7 @@ impl Configuration {
             .build()?;
 
         Ok(Self {
-            html_cache_path: config.get_string("html_cache_path")?.into(),
+            html_cache_path: config.get("html_cache_path")?,
             listening_port: config.get("listening_port")?,
         })
     }
@@ -123,7 +123,7 @@ async fn main() {
     } = Configuration::load().unwrap();
 
     let html_cache = HTMLCache {
-        directory: PathBuf::from(html_cache_path),
+        directory: html_cache_path,
     };
 
     let app = Router::new()
