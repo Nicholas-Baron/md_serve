@@ -12,7 +12,8 @@ use tokio::{fs, io};
 
 use tracing::info;
 
-use config::Config;
+mod configuration;
+use configuration::Configuration;
 
 async fn run_markdown(input_markdown: &Path, output_html: &Path) -> io::Result<ExitStatus> {
     info!("Converting {:?} to {:?}", input_markdown, output_html);
@@ -89,28 +90,6 @@ async fn serve_html(
 
     let output_html = html_cache.cache_markdown(&input_markdown).await.unwrap();
     Html(fs::read_to_string(output_html).await.unwrap())
-}
-
-struct Configuration {
-    html_cache_path: PathBuf,
-    listening_port: u16,
-}
-
-impl Configuration {
-    fn load() -> Result<Self, config::ConfigError> {
-        let config = Config::builder()
-            .add_source(config::File::with_name("md_serve").required(false))
-            .set_default("html_cache_path", "./html_cache")
-            .unwrap()
-            .set_default("listening_port", 3000)
-            .unwrap()
-            .build()?;
-
-        Ok(Self {
-            html_cache_path: config.get("html_cache_path")?,
-            listening_port: config.get("listening_port")?,
-        })
-    }
 }
 
 #[tokio::main]
