@@ -99,7 +99,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/favicon.ico", get(|| async {}))
-        .route("/:file", get(serve_html).with_state(html_cache));
+        .route("/*file", get(serve_html).with_state(html_cache));
 
     let listener = TcpListener::bind("localhost:3000").await.unwrap();
 
