@@ -56,9 +56,14 @@ impl HTMLCache {
         output_html.push(input_markdown.file_stem().unwrap());
         output_html.set_extension("html");
 
-        let should_run = !fs::try_exists(&output_html).await?
-            || fs::metadata(&output_html).await?.modified()?
-                < fs::metadata(&input_markdown).await?.modified()?;
+        let (output_exists, output_metadata, input_metadata) = tokio::join!(
+            fs::try_exists(&output_html),
+            fs::metadata(&output_html),
+            fs::metadata(&input_markdown)
+        );
+
+        let should_run =
+            !output_exists? || output_metadata?.modified()? < input_metadata?.modified()?;
 
         if should_run {
             run_markdown(input_markdown, &output_html).await?;
