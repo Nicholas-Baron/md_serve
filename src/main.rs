@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitStatus;
 
 use axum::extract::{Path as URLPath, State};
-use axum::response::{Html, IntoResponse, Response};
+use axum::response::{self, Html, IntoResponse, Response};
 use axum::routing::get;
 use axum::{http::header, Router};
 use tokio::net::TcpListener;
@@ -91,7 +91,7 @@ async fn serve_raw_resource(filename: &Path) -> io::Result<impl IntoResponse> {
 async fn serve_path(
     URLPath(path): URLPath<String>,
     State(html_cache): State<HTMLCache>,
-) -> io::Result<Response> {
+) -> response::Result<Response> {
     let mut local_filename = PathBuf::from(path.clone());
     if local_filename.extension().is_none() {
         local_filename.set_extension("md");
@@ -101,10 +101,31 @@ async fn serve_path(
             local_filename.display()
         );
 
-        let output_html = html_cache.cache_markdown(&local_filename).await?;
-        Ok(Html(fs::read_to_string(output_html).await?).into_response())
+        let output_html = html_cache
+            .cache_markdown(&local_filename)
+            .await
+            .map_err(|e| {
+                format!(
+                    "Error creating cached version of {}: {e}",
+                    local_filename.display()
+                )
+            })?;
+
+        Ok(fs::read_to_string(&output_html)
+            .await
+            .map(Html)
+            .map(IntoResponse::into_response)
+            .map_err(|e| format!("Error reading from {}: {e}", output_html.display()))?)
     } else {
-        Ok(serve_raw_resource(&local_filename).await?.into_response())
+        Ok(serve_raw_resource(&local_filename)
+            .await
+            .map(IntoResponse::into_response)
+            .map_err(|e| {
+                format!(
+                    "Error getting resource at {}: {e}",
+                    local_filename.display()
+                )
+            })?)
     }
 }
 
