@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitStatus;
 
 use axum::extract::{Path as URLPath, State};
-use axum::response::Html;
+use axum::response::{Html, IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
 use tokio::net::TcpListener;
@@ -82,19 +82,27 @@ impl HTMLCache {
     }
 }
 
-async fn serve_html(
+async fn serve_path(
     URLPath(path): URLPath<String>,
     State(html_cache): State<HTMLCache>,
-) -> Html<String> {
-    let mut input_markdown = PathBuf::from(path.clone());
-    input_markdown.set_extension("md");
-    info!(
-        "{path} requested. Sourcing from {}",
-        input_markdown.display()
-    );
+) -> Response {
+    let mut local_filename = PathBuf::from(path.clone());
+    if local_filename.extension().is_none() {
+        local_filename.set_extension("md");
 
-    let output_html = html_cache.cache_markdown(&input_markdown).await.unwrap();
-    Html(fs::read_to_string(output_html).await.unwrap())
+        info!(
+            "{path} requested. Sourcing from {}",
+            local_filename.display()
+        );
+
+        let output_html = html_cache.cache_markdown(&local_filename).await.unwrap();
+        Html(fs::read_to_string(output_html).await.unwrap()).into_response()
+    } else {
+        todo!(
+            "Implement raw resource response for {}",
+            local_filename.display()
+        )
+    }
 }
 
 #[tokio::main]
@@ -112,7 +120,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/favicon.ico", get(|| async {}))
-        .route("/*file", get(serve_html).with_state(html_cache));
+        .route("/*file", get(serve_path).with_state(html_cache));
 
     let listener = TcpListener::bind(format!("localhost:{listening_port}"))
         .await
