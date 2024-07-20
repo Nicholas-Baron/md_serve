@@ -74,11 +74,7 @@ impl HTMLCache {
             );
         }
 
-        if fs::try_exists(&output_html).await? {
-            Ok(output_html)
-        } else {
-            todo!()
-        }
+        Ok(output_html)
     }
 }
 
