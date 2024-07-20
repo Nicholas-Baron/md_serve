@@ -5,7 +5,7 @@ use std::process::ExitStatus;
 use axum::extract::{Path as URLPath, State};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
+use axum::{http::header, Router};
 use tokio::net::TcpListener;
 use tokio::process::Command;
 use tokio::{fs, io};
@@ -82,6 +82,16 @@ impl HTMLCache {
     }
 }
 
+async fn serve_raw_resource(filename: &Path) -> io::Result<impl IntoResponse> {
+    let file = fs::read(filename).await?;
+
+    let mimetype = mime_guess::from_path(filename).first().unwrap();
+
+    let headers = [(header::CONTENT_TYPE, mimetype.to_string())];
+
+    Ok((headers, file))
+}
+
 async fn serve_path(
     URLPath(path): URLPath<String>,
     State(html_cache): State<HTMLCache>,
@@ -98,10 +108,10 @@ async fn serve_path(
         let output_html = html_cache.cache_markdown(&local_filename).await.unwrap();
         Html(fs::read_to_string(output_html).await.unwrap()).into_response()
     } else {
-        todo!(
-            "Implement raw resource response for {}",
-            local_filename.display()
-        )
+        serve_raw_resource(&local_filename)
+            .await
+            .unwrap()
+            .into_response()
     }
 }
 
