@@ -50,6 +50,10 @@ struct HTMLCache {
 
 impl HTMLCache {
     async fn cache_markdown(&self, input_markdown: &Path) -> io::Result<PathBuf> {
+        if !fs::try_exists(input_markdown).await? {
+            return Err(io::Error::new(io::ErrorKind::NotFound, "No such file"));
+        }
+
         fs::create_dir_all(&self.directory).await?;
 
         let mut output_html = self.directory.clone();
