@@ -132,7 +132,7 @@ async fn main() {
         .route("/favicon.ico", get(|| async {}))
         .route("/*file", get(serve_path).with_state(html_cache));
 
-    let listener = TcpListener::bind(format!("localhost:{listening_port}"))
+    let listener = TcpListener::bind(("localhost", listening_port))
         .await
         .unwrap();
 
