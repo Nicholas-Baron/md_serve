@@ -95,7 +95,7 @@ async fn serve_raw_resource(filename: &Path) -> io::Result<impl IntoResponse> {
 async fn serve_path(
     URLPath(path): URLPath<String>,
     State(html_cache): State<HTMLCache>,
-) -> Response {
+) -> io::Result<Response> {
     let mut local_filename = PathBuf::from(path.clone());
     if local_filename.extension().is_none() {
         local_filename.set_extension("md");
@@ -105,13 +105,10 @@ async fn serve_path(
             local_filename.display()
         );
 
-        let output_html = html_cache.cache_markdown(&local_filename).await.unwrap();
-        Html(fs::read_to_string(output_html).await.unwrap()).into_response()
+        let output_html = html_cache.cache_markdown(&local_filename).await?;
+        Ok(Html(fs::read_to_string(output_html).await?).into_response())
     } else {
-        serve_raw_resource(&local_filename)
-            .await
-            .unwrap()
-            .into_response()
+        Ok(serve_raw_resource(&local_filename).await?.into_response())
     }
 }
 
