@@ -1,3 +1,16 @@
+#![warn(
+    clippy::from_iter_instead_of_collect,
+    clippy::if_not_else,
+    clippy::items_after_statements,
+    clippy::manual_assert,
+    clippy::match_same_arms,
+    clippy::module_name_repetitions,
+    clippy::redundant_closure_for_method_calls,
+    clippy::redundant_else,
+    clippy::single_match_else,
+    clippy::uninlined_format_args
+)]
+
 use std::path::{Path, PathBuf};
 
 use axum::extract::{Path as URLPath, State};

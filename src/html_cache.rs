@@ -8,14 +8,14 @@ use tokio::{fs, io};
 use tracing::info;
 
 async fn run_markdown(input_markdown: &Path, output_html: &Path) -> io::Result<ExitStatus> {
+    use tokio::process::Command;
+
     info!("Converting {:?} to {:?}", input_markdown, output_html);
 
     let title = input_markdown
         .file_stem()
         .and_then(OsStr::to_str)
         .unwrap_or_default();
-
-    use tokio::process::Command;
 
     Command::new("pandoc")
         .env_clear()
@@ -25,7 +25,7 @@ async fn run_markdown(input_markdown: &Path, output_html: &Path) -> io::Result<E
             "-t",
             "html",
             "-s",
-            &format!("--metadata=title:{}", title),
+            &format!("--metadata=title:{title}"),
             "-o",
             output_html
                 .to_str()
