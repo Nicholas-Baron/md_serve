@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.35.1", features = [ "rt-multi-thread", "macros", "fs", "process" ] }
-axum = { version = "0.7.3", features = [ "macros", "tokio", "http2" ] }
+tokio = { version = "1.39.1", features = [ "rt-multi-thread", "macros", "fs", "process" ] }
+axum = { version = "0.7.5", features = [ "macros", "tokio", "http2" ] }
 tracing-subscriber = "0.3.18"
 tracing = "0.1.40"
 config = "0.14.0"
